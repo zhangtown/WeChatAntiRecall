@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "updated": "2026-10-21",
+  "apps": {
+    "weixin": {
+      "name": "微信 4.x (Weixin)",
+      "module": "Weixin.dll",
+      "process": "Weixin.exe",
+      "patches": [
+        {
+          "id": "antirecall",
+          "name": "防撤回",
+          "min_version": "4.1.12.0",
+          "max_version": "",
+          "search": "48 89 86 ?? ?? ?? ?? 4C 89 AD 08 02 00 00 4C 8D 05",
+          "replace": "48 29 86 ?? ?? ?? ?? 4C 89 AD 08 02 00 00 4C 8D 05",
+          "note": "revokemsg 解析流程中的 mov [rsi+0x248], rax 改成 sub [rsi+0x248], rax。字段里本应存放被撤回消息的 newmsgid，改后变成无意义值，后续按 id 查找并替换原消息的步骤匹配不到目标，原消息因此保留。",
+          "verified": ["4.1.15.53"]
+        }
+      ]
+    }
+  }
+}
