@@ -243,7 +243,8 @@ def analyze(dll: Path, version: str = "", app: str = DEFAULT_APP,
     patch = pick_patch(install.version, spec)
     if patch is None:
         return Analysis(install, None, State.UNKNOWN, size=len(data),
-                        detail=f"没有适配 {install.version or '未知版本'} 的特征码")
+                        detail=f"没有适配 {install.version or '未知版本'} 的特征码，"
+                               f"见 docs/ADAPTING.md")
 
     search = parse_pattern(patch["search"])
     replace = parse_pattern(patch["replace"])
@@ -254,7 +255,8 @@ def analyze(dll: Path, version: str = "", app: str = DEFAULT_APP,
     hits_patched = find_all(data, replace)
     if len(hits_patched) == 1 and not hits_orig:
         return Analysis(install, patch, State.PATCHED, hits_patched[0], size=len(data))
-    detail = f"特征命中异常（原始 {len(hits_orig)} 次 / 补丁 {len(hits_patched)} 次）"
+    detail = (f"特征命中异常（原始 {len(hits_orig)} 次 / 补丁 {len(hits_patched)} 次），"
+              f"可能是新版本，见 docs/ADAPTING.md")
     return Analysis(install, patch, State.UNKNOWN, size=len(data), detail=detail)
 
 

@@ -58,7 +58,32 @@
 | 4.1.12.0 及以上 | 支持（特征码来自公开补丁库，已验证 4.1.15.53） |
 | 4.1.12.0 以下 | 未适配（解析逻辑不同，需要另找特征码） |
 
-微信更新后如果提示「特征命中异常」，说明代码变了，需要在 `wxar/patterns.json` 里补一条新记录——不用改代码。
+## 微信升级了怎么适配
+
+微信每次发版都会重编译，特征码可能失效。**不用改代码**：
+
+```powershell
+python tools/relocate.py --dll "C:\Program Files\Tencent\Weixin\<新版本>\Weixin.dll"
+```
+
+工具按「精确匹配 → 模糊匹配（允许字节漂移）→ 字符串锚定」逐级降级，能直接给出可粘贴的
+`patterns.json` 条目；遇到**修改位漂移**或**多候选歧义**时会拒绝自动生成，避免写出错误指令。
+
+完整流程（含手工定位步骤、验证清单、禁忌）见 **[docs/ADAPTING.md](docs/ADAPTING.md)**；
+接手的 agent 先读 **[AGENTS.md](AGENTS.md)**。
+
+## 仓库结构
+
+```
+wxar/core.py        定位 / 备份 / 写入 / 校验 / 还原（无 UI）
+wxar/cli.py         命令行入口
+wxar/gui.py         Tkinter 三步式界面
+wxar/patterns.json  特征库（版本区间 + 字节串，?? 为通配）
+tools/relocate.py   升级后重新定位补丁点
+docs/ADAPTING.md    适配手册
+AGENTS.md           给接手者的速查表
+tests/              单元测试
+```
 
 ## 使用
 
