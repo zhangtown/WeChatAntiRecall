@@ -18,6 +18,8 @@ wxar/cli.py         命令行：list/status/patch/restore/gui
 wxar/gui.py         Tkinter 三步式界面（定位 → 信息 → 确认执行）
 wxar/patterns.json  特征库：版本区间 + search/replace 字节串，?? 为通配
 tools/relocate.py   微信升级后重新定位补丁点（维护者工具）
+docs/ADAPTING.md    适配手册（原理、手工定位、验证清单、禁忌）
+docs/HISTORY.md     适配台账：每次适配的版本/偏移/漂移/验证
 tests/              单元测试，纯逻辑，不需要真实 DLL
 build.ps1           PyInstaller 打包成两个单文件 exe
 ```
@@ -47,13 +49,15 @@ $env:WXAR_SELFTEST_OUT="$env:TEMP\st.txt"; .\dist\WeChatAntiRecall-GUI.exe --sel
 
 ## 微信升级了怎么办
 
-读 [`docs/ADAPTING.md`](docs/ADAPTING.md)。要点：
+读 [`docs/ADAPTING.md`](docs/ADAPTING.md)，适配完在 [`docs/HISTORY.md`](docs/HISTORY.md) 追加一行台账。要点：
 
-1. `python tools/relocate.py --dll <新版本 DLL 副本>`
-2. 精确命中 → 无需适配；模糊命中且漂移只在非修改位 → 采纳工具输出的条目
-3. 修改位漂移 / 多候选歧义 → 按文档手工确认，**不要**照抄旧字节
-4. 新条目追加进 `patterns.json`，用 `min_version` / `max_version` 分段，不改旧条目
-5. 跑测试 + 副本全流程 + 真机验收，最后填 `verified`
+1. 先翻 `docs/HISTORY.md`，看同类漂移以前怎么处理的
+2. `python tools/relocate.py --dll <新版本 DLL 副本>`
+3. 精确命中 → 无需适配；模糊命中且漂移只在非修改位 → 采纳工具输出的条目
+4. 修改位漂移 / 多候选歧义 → 按文档手工确认，**不要**照抄旧字节
+5. 新条目追加进 `patterns.json`，用 `min_version` / `max_version` 分段，不改旧条目
+6. 跑测试 + 副本全流程 + 真机验收，最后填 `verified`
+7. 在 `docs/HISTORY.md` 记账：日期、版本、原始 SHA256、偏移、指令、漂移、验证程度
 
 ## 提交约定
 

@@ -69,8 +69,8 @@ python tools/relocate.py --dll "C:\Program Files\Tencent\Weixin\<新版本>\Weix
 工具按「精确匹配 → 模糊匹配（允许字节漂移）→ 字符串锚定」逐级降级，能直接给出可粘贴的
 `patterns.json` 条目；遇到**修改位漂移**或**多候选歧义**时会拒绝自动生成，避免写出错误指令。
 
-完整流程（含手工定位步骤、验证清单、禁忌）见 **[docs/ADAPTING.md](docs/ADAPTING.md)**；
-接手的 agent 先读 **[AGENTS.md](AGENTS.md)**。
+完整流程（含手工定位步骤、验证清单、禁忌）见 **[docs/ADAPTING.md](docs/ADAPTING.md)**，
+历次适配记录见 **[docs/HISTORY.md](docs/HISTORY.md)**；接手的 agent 先读 **[AGENTS.md](AGENTS.md)**。
 
 ## 仓库结构
 
@@ -81,6 +81,7 @@ wxar/gui.py         Tkinter 三步式界面
 wxar/patterns.json  特征库（版本区间 + 字节串，?? 为通配）
 tools/relocate.py   升级后重新定位补丁点
 docs/ADAPTING.md    适配手册
+docs/HISTORY.md     适配台账（版本 / 偏移 / 漂移 / 验证）
 AGENTS.md           给接手者的速查表
 tests/              单元测试
 ```
