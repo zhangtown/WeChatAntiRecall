@@ -49,26 +49,50 @@ def parse_pattern(expr: str) -> list[int | None]:
     return out
 
 
+def longest_literal_run(pat: list[int | None]) -> tuple[int, int]:
+    """特征码里最长的一段连续固定字节 [start, end)，用来当搜索锚点。"""
+    best = (0, 0)
+    start = None
+    for i, v in enumerate(list(pat) + [None]):     # 末尾补 None 收尾
+        if v is None:
+            if start is not None:
+                if i - start > best[1] - best[0]:
+                    best = (start, i)
+                start = None
+        elif start is None:
+            start = i
+    return best
+
+
 def find_all(buf: bytes, pat: list[int | None]) -> list[int]:
-    """返回 pat 在 buf 中所有匹配的起始偏移（支持通配）。"""
+    """返回 pat 在 buf 中所有匹配的起始偏移（支持通配）。
+
+    先用最长固定段做一次 C 层 bytes.find，再在候选点上逐字节校验，
+    避免对 200 MB 的 DLL 做 Python 级逐字节比较。
+    """
     n = len(pat)
     if n == 0 or n > len(buf):
         return []
-    anchor_idx = next((i for i, v in enumerate(pat) if v is not None), None)
-    if anchor_idx is None:            # 全是通配，没有意义
+    a0, a1 = longest_literal_run(pat)
+    if a1 == a0:                       # 没有固定字节，无从下手
         return []
-    anchor = pat[anchor_idx]
+    anchor = bytes(pat[a0:a1])
+    limit = len(buf) - n
     hits: list[int] = []
-    i = anchor_idx
+    pos = 0
     while True:
-        i = buf.find(bytes([anchor]), i)
+        i = buf.find(anchor, pos)
         if i < 0:
             break
-        pos = i - anchor_idx
-        if pos >= 0 and pos + n <= len(buf):
-            if all(p is None or buf[pos + k] == p for k, p in enumerate(pat)):
-                hits.append(pos)
-        i += 1
+        base = i - a0
+        if base < 0:
+            pos = i + 1
+            continue
+        if base > limit:
+            break
+        if all(p is None or buf[base + k] == p for k, p in enumerate(pat)):
+            hits.append(base)
+        pos = i + 1
     return hits
 
 
@@ -224,10 +248,10 @@ def analyze(dll: Path, version: str = "", app: str = DEFAULT_APP,
     search = parse_pattern(patch["search"])
     replace = parse_pattern(patch["replace"])
     hits_orig = find_all(data, search)
-    hits_patched = find_all(data, replace)
-
-    if len(hits_orig) == 1 and not hits_patched:
+    if len(hits_orig) == 1:
         return Analysis(install, patch, State.ORIGINAL, hits_orig[0], size=len(data))
+
+    hits_patched = find_all(data, replace)
     if len(hits_patched) == 1 and not hits_orig:
         return Analysis(install, patch, State.PATCHED, hits_patched[0], size=len(data))
     detail = f"特征命中异常（原始 {len(hits_orig)} 次 / 补丁 {len(hits_patched)} 次）"

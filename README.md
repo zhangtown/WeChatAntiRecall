@@ -68,7 +68,17 @@
 python -m wxar gui
 ```
 
-或者直接双击 `run_gui.bat`。列表里会显示版本和当前状态（未打补丁 / 已打补丁 / 未知），点「打补丁」即可；改 `Program Files` 会弹一次 UAC。
+或者双击 `run_gui.bat` / `dist\WeChatAntiRecall-GUI.exe`。
+
+界面是三步式的，**打开不会自动改文件**：
+
+1. **定位文件**：启动时自动检测 `Program Files` 下的微信安装；也可以点「浏览…」手动选一个 `Weixin.dll`
+2. **确认信息**：显示文件名、版本、大小、当前状态、补丁点偏移，以及「检测到的安装」下拉框（多版本时切换）
+3. **执行**：只有状态是「未打补丁」时「打补丁」按钮才可点；点击后还会弹一次确认框，列出文件、版本、偏移和将要改的字节，确认后才写入
+
+改 `Program Files` 需要管理员权限，会在点「打补丁」时才请求 UAC，而不是启动时就弹。
+
+> 启动首次扫描约 0.2 秒（早期版本这里会卡 16 秒，表现为窗口「无响应」，已在 1.1.0 修复：特征码改为按最长固定段锚定，并且扫描放到后台线程）。
 
 ### 命令行
 
@@ -108,7 +118,19 @@ python -m wxar restore         # 用最近的备份还原
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-产物在 `dist\WeChatAntiRecall.exe`（单文件，无需 Python 环境）。
+产物是单文件、免 Python 环境：
+
+- `dist\WeChatAntiRecall-GUI.exe`：图形界面
+- `dist\WeChatAntiRecall.exe`：命令行
+
+构建脚本会先清理同名残留进程——PyInstaller 单文件 exe 由引导器拉子进程，直接 `Stop-Process` 父进程会留下子进程继续占用 exe，导致下次打包报 `WinError 5`。
+
+无人值守环境可以用自检模式验证打包产物：
+
+```powershell
+$env:WXAR_SELFTEST_OUT="$env:TEMP\selftest.txt"
+.\dist\WeChatAntiRecall-GUI.exe --selftest   # 3 秒后把界面状态写进文件并退出
+```
 
 ## 打补丁前后
 
@@ -135,6 +157,10 @@ Copy-Item "C:\Program Files\Tencent\Weixin\4.1.15.53\Weixin.dll.bak-20261021-123
 ```
 
 ## 常见问题
+
+**双击 exe 后窗口「无响应」**：1.0.0 的问题，扫描 200 MB 的 DLL 时同步阻塞了 UI 线程（约 16 秒）。1.1.0 已改为
+「最长固定段锚定 + 后台线程」，扫描约 0.2 秒，窗口始终可交互。如果仍无响应，看
+`%TEMP%\WeChatAntiRecall-crash.log` 有没有堆栈。
 
 **打补丁报「微信正在运行」**：从托盘图标右键退出，任务管理器里确认没有 `Weixin.exe` 残留。
 

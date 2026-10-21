@@ -3,6 +3,11 @@
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
+# 单文件 exe 由引导器拉起子进程，退出时可能残留，先清掉避免文件占用导致 WinError 5
+Get-Process WeChatAntiRecall, WeChatAntiRecall-GUI -ErrorAction SilentlyContinue |
+    Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 800
+
 $python = (Get-Command python -ErrorAction SilentlyContinue)
 if (-not $python) { throw "找不到 python，请先安装 Python 3.9+" }
 
